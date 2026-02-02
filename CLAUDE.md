@@ -2,7 +2,7 @@
 
 **Project**: AI Chat to Markdown Converter
 **Type**: Python CLI tool + PyPI package
-**Status**: Production-ready, awaiting PyPI release
+**Status**: Production-ready, published on PyPI
 
 ---
 
