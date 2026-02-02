@@ -1,0 +1,33 @@
+# Config with API keys
+config.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Output
+output/
+*.md
+!README.md
+!docs/**/*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test files
+*.webarchive
+extracted_*.txt
+extracted_*.html
