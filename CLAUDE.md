@@ -36,7 +36,7 @@ Input → Extract (no AI) → Structurize (AI) → Save
 ```
 aichat2md/
 ├── aichat2md/                      # Main package
-│   ├── __init__.py                 # Version: 1.0.0
+│   ├── __init__.py                 # Version: 1.0.1
 │   ├── cli.py                      # Argument parsing, main entry
 │   ├── config.py                   # Multi-API config, interactive setup
 │   ├── structurizer.py             # OpenAI-compatible API calls
@@ -190,6 +190,15 @@ API_PRESETS = {
 
 ## Common Issues & Solutions
 
+### "Prompt file not found" after PyPI install
+
+**Fix**: Add `[tool.setuptools.package-data]` to pyproject.toml:
+```toml
+[tool.setuptools.package-data]
+aichat2md = ["prompts/*.txt"]
+```
+Verify with: `unzip -l dist/*.whl | grep prompts`
+
 ### "Configuration file not found"
 
 **Fix**: Run `aichat2md --setup` to create config
@@ -212,6 +221,13 @@ API_PRESETS = {
 - Config structure → Update `test_config.py`
 - CLI args → Update `test_cli.py`
 - API format → Update `structurizer.py`
+
+### macOS pip protection (externally-managed-environment)
+
+System Python blocks `pip install` (PEP 668). Solutions:
+- **Recommended**: `brew install pipx && pipx install aichat2md`
+- Alternative: `python3 -m venv venv && source venv/bin/activate && pip install aichat2md`
+- Not recommended: `pip install --user aichat2md` (requires PATH setup)
 
 ---
 
@@ -314,7 +330,9 @@ git status
 
 ### 1. Pre-release
 ```bash
-# Update version in aichat2md/__init__.py
+# Update version in BOTH files:
+# - pyproject.toml (version = "X.Y.Z")
+# - aichat2md/__init__.py (__version__ = "X.Y.Z")
 # Update CHANGELOG.md (if exists)
 # Commit: "chore: bump version to X.Y.Z"
 ```
@@ -342,6 +360,9 @@ aichat2md --version
 ### 4. Production Release
 ```bash
 twine upload dist/*
+
+# Verify upload (may take 2-3 seconds to propagate)
+pip index versions aichat2md
 ```
 
 ### 5. GitHub Release
@@ -418,8 +439,8 @@ git push origin v1.0.0
 
 ## Contact & Support
 
-**Repository**: https://github.com/yourusername/aichat2md
-**Issues**: https://github.com/yourusername/aichat2md/issues
+**Repository**: https://github.com/placenameday/aichat2md
+**Issues**: https://github.com/placenameday/aichat2md/issues
 **License**: MIT
 
 ---
@@ -458,5 +479,5 @@ git tag vX.Y.Z
 ---
 
 **Last Updated**: 2026-02-02
-**Version**: 1.0.0
+**Version**: 1.0.1
 **Status**: Production-ready
