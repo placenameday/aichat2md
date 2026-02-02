@@ -41,16 +41,21 @@ def setup_config():
 def load_config() -> Dict[str, Any]:
     """Load configuration from file."""
     if not CONFIG_FILE.exists():
-        print(f"✗ Configuration file not found at {CONFIG_FILE}")
-        print("Please run: python chatgpt2md.py --setup")
-        exit(1)
+        raise FileNotFoundError(
+            f"Configuration file not found at {CONFIG_FILE}. "
+            "Please run: python chatgpt2md.py --setup"
+        )
 
-    config = json.loads(CONFIG_FILE.read_text(encoding='utf-8'))
+    try:
+        config = json.loads(CONFIG_FILE.read_text(encoding='utf-8'))
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in config file: {e}")
 
     if not config.get("deepseek_api_key"):
-        print("✗ DeepSeek API key not configured")
-        print("Please run: python chatgpt2md.py --setup")
-        exit(1)
+        raise ValueError(
+            "DeepSeek API key not configured. "
+            "Please run: python chatgpt2md.py --setup"
+        )
 
     return config
 
