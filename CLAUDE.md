@@ -18,6 +18,7 @@ Convert AI chat conversations (ChatGPT, Gemini, Doubao, Claude, etc.) to structu
 - **Bilingual**: English/Chinese system prompts
 - **PyPI package**: `pip install aichat2md` → global `aichat2md` command
 - **Smart output**: Knowledge documents, not chat logs
+- **Progress feedback**: Animated spinner with timer for long operations
 
 ### Architecture
 
@@ -287,6 +288,15 @@ System Python blocks `pip install` (PEP 668). Solutions:
 - Alternative: `python3 -m venv venv && source venv/bin/activate && pip install aichat2md`
 - Not recommended: `pip install --user aichat2md` (requires PATH setup)
 
+### Timeout issues (fixed in v1.1.0)
+
+**Symptoms**: "Timeout exceeded" errors on slow networks or large content
+**Solution**: Automatic in v1.1.0+
+- Playwright timeout: 30s → 60s (handles slow page loads)
+- API timeout: Dynamic (60s + 1s per 100 chars, max 600s)
+- Progress spinner shows elapsed time during long operations
+- No user action required
+
 ---
 
 ## File Modification Guidelines
@@ -443,9 +453,10 @@ git push origin v1.0.0
 - **Cost**: Depends on API (DeepSeek ~$0.001/call)
 
 ### Processing Time
-- **URL extraction**: 5-10s (Playwright startup + JS render)
+- **URL extraction**: 5-60s (Playwright startup + JS render, auto-scaled timeout)
 - **Webarchive extraction**: <1s (local file parsing)
-- **AI structurization**: 10-30s (API latency + generation)
+- **AI structurization**: 10-600s (API latency + generation, dynamic timeout based on content size)
+- **Progress feedback**: Real-time spinner with elapsed time for long operations
 
 ### Optimization Tips
 - Use DeepSeek for cost efficiency
@@ -485,6 +496,7 @@ git push origin v1.0.0
 **Core**:
 - `playwright>=1.40.0` - Browser automation
 - `requests>=2.31.0` - HTTP client
+- `yaspin>=3.0.0` - Progress spinner with timer
 
 **Dev**:
 - `pytest>=9.0` - Testing
@@ -536,6 +548,6 @@ git tag vX.Y.Z
 
 ---
 
-**Last Updated**: 2026-02-02
-**Version**: 1.0.1
+**Last Updated**: 2026-02-03
+**Version**: 1.1.0
 **Status**: Production-ready

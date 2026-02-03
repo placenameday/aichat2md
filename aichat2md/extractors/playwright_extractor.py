@@ -40,7 +40,7 @@ def _get_wait_time(platform: str) -> int:
     return wait_times.get(platform, 2000)
 
 
-def extract_from_url(url: str, timeout: int = 30000) -> str:
+def extract_from_url(url: str, timeout: int = 60000) -> str:
     """
     Extract text content from AI chat share URL.
 
@@ -70,7 +70,7 @@ def extract_from_url(url: str, timeout: int = 30000) -> str:
             # Navigate with appropriate wait strategy
             # Use 'load' for Gemini/Doubao (networkidle may timeout due to ongoing requests)
             wait_strategy = 'load' if platform in ['gemini', 'doubao'] else 'networkidle'
-            page.goto(url, wait_until=wait_strategy, timeout=timeout)
+            page.goto(url, wait_until=wait_strategy, timeout=60000)
 
             # Wait for content to load
             # Try to wait for main selector (works for ChatGPT)

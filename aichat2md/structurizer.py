@@ -81,7 +81,9 @@ def structurize_content(
     }
 
     try:
-        response = requests.post(api_url, headers=headers, json=payload, timeout=60)
+        # Dynamic timeout based on content size: 60s base + 1s per 100 chars, max 600s
+        estimated_timeout = min(60 + len(raw_text) // 100, 600)
+        response = requests.post(api_url, headers=headers, json=payload, timeout=estimated_timeout)
         response.raise_for_status()
 
         result = response.json()

@@ -16,6 +16,8 @@ from pathlib import Path
 from datetime import datetime
 from typing import Tuple
 
+from yaspin import yaspin
+
 from .config import setup_config, load_config
 from .extractors.playwright_extractor import extract_from_url
 from .extractors.webarchive_extractor import extract_from_webarchive
@@ -87,15 +89,17 @@ def extract_content(input_path: str) -> Tuple[str, str]:
         Tuple of (extracted_text, source_identifier)
     """
     if input_path.startswith('http'):
-        print(f"📡 Extracting from URL: {input_path}")
-        text = extract_from_url(input_path)
+        with yaspin(text=f"Extracting from URL (up to 60s): {input_path}", timer=True) as sp:
+            text = extract_from_url(input_path)
+            sp.ok(f"✓ Extracted {len(text)} characters")
         source = input_path
     else:
+        # Webarchive extraction is fast, no spinner needed
         print(f"📄 Extracting from webarchive: {input_path}")
         text = extract_from_webarchive(input_path)
+        print(f"✓ Extracted {len(text)} characters")
         source = Path(input_path).name
 
-    print(f"✓ Extracted {len(text)} characters")
     return text, source
 
 
@@ -221,8 +225,10 @@ Examples:
 
         # Structurize with AI
         provider = config.get("api_base_url", "API")
-        print(f"🤖 Structurizing with {provider}...")
-        markdown = structurize_content(raw_text, config, source)
+        estimated = min(60 + len(raw_text) // 100, 600)
+        with yaspin(text=f"Structurizing {len(raw_text)} chars with {provider} (~{estimated}s)", timer=True) as sp:
+            markdown = structurize_content(raw_text, config, source)
+            sp.ok("✓ Structurized")
 
         # Determine output path
         output_path = determine_output_path(args.input, markdown, config, args.output)
