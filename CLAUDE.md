@@ -8,11 +8,12 @@
 
 ## Project Overview
 
-Convert AI chat conversations (ChatGPT, Claude, etc.) to structured Markdown documents using AI-powered reorganization.
+Convert AI chat conversations (ChatGPT, Gemini, Doubao, Claude, etc.) to structured Markdown documents using AI-powered reorganization.
 
 ### Core Features
 
 - **Dual extraction**: Playwright (URLs with JS rendering) + plistlib (Safari webarchive)
+- **Multi-platform**: ChatGPT, Gemini, Doubao share links + webarchive files
 - **Multi-API**: OpenAI-compatible backends (DeepSeek, OpenAI, Groq, custom)
 - **Bilingual**: English/Chinese system prompts
 - **PyPI package**: `pip install aichat2md` → global `aichat2md` command
@@ -80,6 +81,63 @@ aichat2md/
 - `custom`: Any OpenAI-compatible API
 
 **Setup**: `aichat2md --setup` (interactive)
+
+---
+
+## Platform Extractors
+
+### Supported Platforms
+
+- **ChatGPT** - `chatgpt.com` share links
+- **Gemini** - `gemini.google.com` or `g.co` (auto-redirects)
+- **Doubao (豆包)** - `doubao.com` thread links
+- **Webarchive** - Safari `.webarchive` files (any platform)
+
+### Extraction Strategy
+
+**URL Detection** (`playwright_extractor.py`):
+- Automatic platform detection via domain matching
+- Platform-specific wait times for dynamic content
+- Adaptive load strategy (load vs networkidle)
+
+**Wait Times**:
+```python
+{
+    'doubao': 3000,   # 3s for Doubao's dynamic content
+    'gemini': 5000,   # 5s for Gemini's slower rendering
+    'default': 2000   # 2s for ChatGPT and others
+}
+```
+
+**Load Strategy**:
+- Gemini/Doubao: `wait_until='load'` (faster, avoids networkidle timeout)
+- ChatGPT/others: `wait_until='networkidle'` (waits for all requests)
+
+### Adding New Platforms
+
+To support a new platform, modify `playwright_extractor.py`:
+
+1. Update `_detect_platform()`:
+```python
+def _detect_platform(url: str) -> str:
+    url_lower = url.lower()
+    if 'newplatform.com' in url_lower:
+        return 'newplatform'
+    # ... existing checks
+```
+
+2. Add wait time in `_get_wait_time()`:
+```python
+wait_times = {
+    'newplatform': 4000,  # Adjust based on testing
+    # ... existing times
+}
+```
+
+3. Test with real share URL:
+```bash
+python aichat2md/extractors/playwright_extractor.py "https://newplatform.com/share/xxx"
+```
 
 ---
 

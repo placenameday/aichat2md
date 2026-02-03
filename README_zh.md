@@ -4,7 +4,7 @@
 
 ## 特性
 
-- 🌐 **从 URL 提取** - 支持 ChatGPT 分享链接（通过 Playwright 渲染 JS）
+- 🌐 **从 URL 提取** - 支持 ChatGPT、Gemini、豆包分享链接（通过 Playwright 渲染 JS）
 - 📄 **从 webarchive 提取** - Safari .webarchive 文件（离线模式）
 - 🤖 **多 AI 后端** - DeepSeek、OpenAI、Groq 或任何兼容 OpenAI 的 API
 - 🌍 **双语支持** - 英文/中文提示词
@@ -25,6 +25,30 @@ aichat2md https://chatgpt.com/share/xxx
 
 # 转换 webarchive 文件
 aichat2md ~/Downloads/chat.webarchive
+```
+
+## 支持的平台
+
+- **ChatGPT** - chatgpt.com 分享链接
+- **Gemini** - gemini.google.com 或 g.co 分享链接
+- **豆包** - doubao.com 分享链接
+- **Webarchive** - Safari 导出的 .webarchive 文件（支持所有平台）
+
+### 使用示例
+
+```bash
+# ChatGPT
+aichat2md https://chatgpt.com/share/xxx
+
+# Gemini（支持长短链接）
+aichat2md https://gemini.google.com/share/xxx
+aichat2md https://g.co/gemini/share/xxx
+
+# 豆包
+aichat2md https://www.doubao.com/thread/xxx
+
+# Webarchive 文件
+aichat2md ~/Downloads/conversation.webarchive
 ```
 
 ## 支持的 AI 后端
