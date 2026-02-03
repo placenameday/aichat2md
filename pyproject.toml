@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "aichat2md"
-version = "1.1.0"
+version = "1.2.0"
 description = "Convert AI chat conversations to structured Markdown"
 readme = "README.md"
 requires-python = ">=3.8"

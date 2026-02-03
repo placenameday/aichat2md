@@ -549,5 +549,5 @@ git tag vX.Y.Z
 ---
 
 **Last Updated**: 2026-02-03
-**Version**: 1.1.0
+**Version**: 1.2.0
 **Status**: Production-ready
