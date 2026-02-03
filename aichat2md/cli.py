@@ -15,6 +15,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 from typing import Tuple
+import time
 
 from yaspin import yaspin
 
@@ -23,6 +24,17 @@ from .extractors.playwright_extractor import extract_from_url
 from .extractors.webarchive_extractor import extract_from_webarchive
 from .structurizer import structurize_content
 from . import __version__
+
+
+class TimedText:
+    """Dynamic text with elapsed time in seconds."""
+    def __init__(self, text: str):
+        self.text = text
+        self._start = time.time()
+
+    def __str__(self):
+        elapsed = int(time.time() - self._start)
+        return f"[{elapsed}s] {self.text}"
 
 
 def sanitize_filename(title: str, max_length: int = 50) -> str:
@@ -89,7 +101,7 @@ def extract_content(input_path: str) -> Tuple[str, str]:
         Tuple of (extracted_text, source_identifier)
     """
     if input_path.startswith('http'):
-        with yaspin(text=f"Extracting from URL (up to 60s): {input_path}", timer=True) as sp:
+        with yaspin(text=TimedText(f"Extracting from URL (up to 60s): {input_path}")) as sp:
             text = extract_from_url(input_path)
             sp.ok(f"✓ Extracted {len(text)} characters")
         source = input_path
@@ -226,7 +238,7 @@ Examples:
         # Structurize with AI
         provider = config.get("api_base_url", "API")
         estimated = min(60 + len(raw_text) // 100, 600)
-        with yaspin(text=f"Structurizing {len(raw_text)} chars with {provider} (~{estimated}s)", timer=True) as sp:
+        with yaspin(text=TimedText(f"Structurizing {len(raw_text)} chars with {provider} (~{estimated}s)")) as sp:
             markdown = structurize_content(raw_text, config, source)
             sp.ok("✓ Structurized")
 
