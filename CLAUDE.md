@@ -2,7 +2,7 @@
 
 **Project**: AI Chat to Markdown Converter
 **Type**: Python CLI tool + PyPI package
-**Status**: Production-ready, published on PyPI
+**Version**: 1.3.2 | **Status**: Production-ready, published on PyPI
 
 ---
 
@@ -10,26 +10,15 @@
 
 Convert AI chat conversations (ChatGPT, Gemini, Doubao, Claude, etc.) to structured Markdown documents using AI-powered reorganization.
 
+**Pipeline**: `Input → Extract (local, no AI) → Structurize (AI) → Save`
+
 ### Core Features
 
 - **Dual extraction**: Playwright (URLs with JS rendering) + plistlib (Safari webarchive)
-- **Multi-platform**: ChatGPT, Gemini, Doubao share links + webarchive files
+- **Multi-platform**: ChatGPT, Gemini, Doubao share links + webarchive/html files
 - **Multi-API**: OpenAI-compatible backends (DeepSeek, OpenAI, Groq, custom)
 - **Bilingual**: English/Chinese system prompts
 - **PyPI package**: `pip install aichat2md` → global `aichat2md` command
-- **Smart output**: Knowledge documents, not chat logs
-- **Progress feedback**: Animated spinner with timer for long operations
-
-### Architecture
-
-```
-Input → Extract (no AI) → Structurize (AI) → Save
-```
-
-**Why two-stage?**
-- Extract: Local processing, no token cost
-- Structurize: AI reorganizes into knowledge format
-- Allows caching extracted content
 
 ---
 
@@ -37,8 +26,8 @@ Input → Extract (no AI) → Structurize (AI) → Save
 
 ```
 aichat2md/
-├── aichat2md/                      # Main package
-│   ├── __init__.py                 # Version: 1.0.1
+├── aichat2md/
+│   ├── __init__.py                 # Version string
 │   ├── cli.py                      # Argument parsing, main entry
 │   ├── config.py                   # Multi-API config, interactive setup
 │   ├── structurizer.py             # OpenAI-compatible API calls
@@ -46,23 +35,20 @@ aichat2md/
 │   │   ├── playwright_extractor.py # URL extraction (Chromium)
 │   │   └── webarchive_extractor.py # Binary plist parsing
 │   └── prompts/
-│       ├── system_prompt_en.txt    # English prompt
-│       └── system_prompt_zh.txt    # Chinese prompt
+│       ├── system_prompt_en.txt
+│       └── system_prompt_zh.txt
 ├── tests/                          # Pytest suite (11 tests)
 │   ├── test_cli.py
 │   └── test_config.py
-├── pyproject.toml                  # Modern Python packaging
-├── README.md / README_zh.md        # Documentation
-└── LICENSE                         # MIT
+└── pyproject.toml
 ```
 
 ---
 
 ## Configuration
 
-**Location**: `~/.config/aichat2md/config.json` (cross-platform)
+**Location**: `~/.config/aichat2md/config.json`
 
-**Structure**:
 ```json
 {
   "api_key": "sk-xxx",
@@ -75,11 +61,7 @@ aichat2md/
 }
 ```
 
-**API Presets**:
-- `deepseek`: Cost-effective, Chinese service
-- `openai`: GPT-4o-mini/GPT-4
-- `groq`: Fast inference (Llama)
-- `custom`: Any OpenAI-compatible API
+**API Presets**: `deepseek` (cost-effective) | `openai` | `groq` (fast) | `custom`
 
 **Setup**: `aichat2md --setup` (interactive)
 
@@ -92,61 +74,22 @@ aichat2md/
 - **ChatGPT** - `chatgpt.com` share links
 - **Gemini** - `gemini.google.com` or `g.co` (auto-redirects)
 - **Doubao (豆包)** - `doubao.com` thread links
+- **Claude** - NOT supported via URL (see Common Issues)
 
 ### Local File Formats
 
-- **Safari** - `.webarchive` files (best, preserves content perfectly)
-- **Chrome/Edge** - `.mhtml` or `.html` files (Save As → Web Page, Complete)
-- **Firefox** - `.html` files (Save Page As → Web Page, HTML only)
-- **Any browser** - Save entire page to HTML file
+- **Safari** - `.webarchive` (best, preserves content perfectly)
+- **Chrome/Edge** - `.mhtml` or `.html` (Save As → Web Page, Complete)
+- **Firefox** - `.html` (Save Page As → Web Page, HTML only)
 
-### Extraction Strategy
+### Extraction Strategy (`playwright_extractor.py`)
 
-**URL Detection** (`playwright_extractor.py`):
-- Automatic platform detection via domain matching
-- Platform-specific wait times for dynamic content
-- Adaptive load strategy (load vs networkidle)
-
-**Wait Times**:
 ```python
-{
-    'claude': 5000,   # 5s for Claude (Cloudflare + JS rendering)
-    'doubao': 3000,   # 3s for Doubao's dynamic content
-    'gemini': 5000,   # 5s for Gemini's slower rendering
-    'default': 2000   # 2s for ChatGPT and others
-}
+wait_times = {'claude': 5000, 'doubao': 3000, 'gemini': 5000, 'default': 2000}
+# Gemini/Doubao: wait_until='load'; ChatGPT/others: wait_until='networkidle'
 ```
 
-**Load Strategy**:
-- Claude: **NOT SUPPORTED** (see below)
-- Gemini/Doubao: `wait_until='load'` (faster, avoids networkidle timeout)
-- ChatGPT/others: `wait_until='networkidle'` (waits for all requests)
-
-### Adding New Platforms
-
-To support a new platform, modify `playwright_extractor.py`:
-
-1. Update `_detect_platform()`:
-```python
-def _detect_platform(url: str) -> str:
-    url_lower = url.lower()
-    if 'newplatform.com' in url_lower:
-        return 'newplatform'
-    # ... existing checks
-```
-
-2. Add wait time in `_get_wait_time()`:
-```python
-wait_times = {
-    'newplatform': 4000,  # Adjust based on testing
-    # ... existing times
-}
-```
-
-3. Test with real share URL:
-```bash
-python aichat2md/extractors/playwright_extractor.py "https://newplatform.com/share/xxx"
-```
+To add a new platform: update `_detect_platform()` and `_get_wait_time()`.
 
 ---
 
@@ -155,103 +98,34 @@ python aichat2md/extractors/playwright_extractor.py "https://newplatform.com/sha
 ### Local Setup
 
 ```bash
-# Clone and setup
 cd /Users/placenameday/R_Project/Tech/aichat2md
-python3 -m venv venv
-source venv/bin/activate
-
-# Install in editable mode
+python3 -m venv venv && source venv/bin/activate
 pip install -e .
-
-# Install Playwright browser
 playwright install chromium
-
-# Run tests
 pytest tests/ -v  # Should see: 11 passed
 ```
 
 ### Common Commands
 
 ```bash
-# Development
-source venv/bin/activate           # Activate venv
-aichat2md --version               # Verify installation
-aichat2md --help                  # Check CLI
+# Dev
+source venv/bin/activate
+pytest tests/ -v
+pytest -k test_validate
 
-# Testing
-pytest tests/ -v                  # Run all tests
-pytest tests/test_cli.py -v      # Specific test file
-pytest -k test_validate          # By name pattern
-
-# Building
-pip install build twine
-python -m build                   # Creates dist/
-ls dist/                          # .tar.gz + .whl
-
-# TestPyPI (dry run)
-twine upload --repository testpypi dist/*
-pip install -i https://test.pypi.org/simple/ aichat2md
-
-# Production PyPI
-twine upload dist/*
+# Build & release
+rm -rf dist/ build/ *.egg-info/
+python -m build
+twine upload --repository testpypi dist/*   # dry run
+twine upload dist/*                          # production (interactive token)
 ```
 
 ### Code Conventions
 
 1. **Config priority**: CLI args > config.json > defaults
 2. **Error handling**: Specific messages (401 → "Check API key", 429 → "Rate limit")
-3. **Path handling**: Always use `Path` objects, expanduser for `~`
-4. **Cross-platform**: Test config paths work on Windows/Mac/Linux
-5. **Tests**: Add tests for new features before merging
-
-### Adding New API Provider
-
-1. Add preset to `config.py`:
-```python
-API_PRESETS = {
-    "newapi": {
-        "api_base_url": "https://api.example.com",
-        "model": "model-name",
-        "description": "New API (description)"
-    }
-}
-```
-
-2. Test with `aichat2md --setup`
-
-### Adding New Language
-
-1. Create prompt: `aichat2md/prompts/system_prompt_{code}.txt`
-2. Update CLI: `--lang` choices in `cli.py`
-3. Test: `aichat2md <url> --lang {code}`
-
----
-
-## Key Design Decisions
-
-### Why OpenAI-Compatible?
-
-- **Standardization**: Most APIs follow OpenAI format
-- **Flexibility**: Easy to add new providers
-- **No vendor lock-in**: Switch APIs without code changes
-
-### Why Separate Prompts?
-
-- **Maintainability**: Edit prompts without touching code
-- **Localization**: Add languages without rebuilding
-- **Version control**: Track prompt changes separately
-
-### Why Two-Stage Processing?
-
-- **Cost**: Extract locally (no API calls)
-- **Caching**: Reuse extracted content with different prompts
-- **Debugging**: Inspect raw extraction before AI processing
-
-### Why Cross-Platform Config?
-
-- **Standard**: Follows XDG Base Directory spec
-- **Security**: Separate from project (don't commit API keys)
-- **Portability**: Works on all platforms
+3. **Path handling**: Always use `Path` objects, `expanduser` for `~`
+4. **Tests**: Add tests for new features before merging
 
 ---
 
@@ -259,349 +133,97 @@ API_PRESETS = {
 
 ### "Prompt file not found" after PyPI install
 
-**Fix**: Add `[tool.setuptools.package-data]` to pyproject.toml:
+Ensure `pyproject.toml` has:
 ```toml
 [tool.setuptools.package-data]
 aichat2md = ["prompts/*.txt"]
 ```
-Verify with: `unzip -l dist/*.whl | grep prompts`
+Verify: `unzip -l dist/*.whl | grep prompts`
 
-### "Configuration file not found"
+### Other common fixes
 
-**Fix**: Run `aichat2md --setup` to create config
-
-### "API authentication failed"
-
-**Fix**: Check API key in `~/.config/aichat2md/config.json`
+| Issue | Fix |
+|-------|-----|
+| "Configuration file not found" | `aichat2md --setup` |
+| "API authentication failed" | Check `~/.config/aichat2md/config.json` |
+| Playwright browser missing | `playwright install chromium` |
+| Import errors after editing | `pip install -e .` |
+| Tests fail after changes | Update matching test file (`test_cli.py` / `test_config.py`) |
 
 ### Claude share links cannot be extracted
 
-**Error**: Running `aichat2md <claude_url>` shows a warning message with instructions
+**Status**: Blocked. Cloudflare + cookie consent banner prevents React hydration; conversation data loads only after consent, but the consent button click handler doesn't fire in Playwright.
 
-**Root cause**: Claude share pages use Cloudflare bot detection that prevents automated access via Playwright
-
-**Solution**: Manual export required:
-1. Open the Claude share link in your browser
-2. Click "Export" button (top right corner)
-3. Download as JSON or Markdown
-4. Use: `aichat2md <exported_file>`
-
-**Note**: This is not a bug in the tool - it's a technical limitation due to Cloudflare's browser fingerprinting.
-
-### Playwright browser not installed
-
-**Fix**: `playwright install chromium`
-
-### Import errors after editing
-
-**Fix**: Reinstall: `pip install -e .`
-
-### Tests fail after changes
-
-**Fix**: Check if you modified:
-- Config structure → Update `test_config.py`
-- CLI args → Update `test_cli.py`
-- API format → Update `structurizer.py`
-
-### macOS pip protection (externally-managed-environment)
-
-System Python blocks `pip install` (PEP 668). Solutions:
-- **Recommended**: `brew install pipx && pipx install aichat2md`
-- Alternative: `python3 -m venv venv && source venv/bin/activate && pip install aichat2md`
-- Not recommended: `pip install --user aichat2md` (requires PATH setup)
-
-### Claude share link extraction (v1.3.0 - BROKEN, needs fix)
-
-**Status**: Stealth mode bypasses Cloudflare, but cookie consent banner blocks content rendering.
-
-**Root cause**: Claude share pages (`claude.ai/share/*`) have a cookie consent banner that blocks React hydration. The conversation data is NOT in the initial HTML — it's fetched lazily via API only AFTER consent is accepted. The consent button's click handler doesn't fire because React hydration itself is blocked by the consent flow.
-
-**What works**:
-- Stealth settings bypass Cloudflare bot detection (user-agent, hide `navigator.webdriver`, `--disable-blink-features=AutomationControlled`)
-- Page HTML loads (800KB+), title is correct, RSC payload contains app shell/i18n strings
-- `wait_until='domcontentloaded'` loads the page; `networkidle` always times out
-
-**What doesn't work**:
-- Button click (Playwright `.click()`, JS `dispatchEvent`, keyboard Tab+Enter) — no effect, no network request fires
-- Removing consent banner — React renders Claude homepage ("App unavailable in region") instead of share content
-- Setting `requiresExplicitConsent: false` via route interception — same homepage fallback
-- Pre-setting cookies (`cookie-consent`, `cookieConsent`, etc.) — wrong cookie name, banner persists
-- Extracting from RSC payload — conversation text is NOT in initial HTML, only 48 Chinese chars (title only)
-
-**Key findings**:
-- RSC data has `"requiresExplicitConsent":true,"gpcDetected":false` wrapping the page
-- Only 1 network request (the page HTML) — no separate API calls happen until consent is accepted
-- Clicking "Accept All Cookies" produces zero network requests (handler not bound or silently failing)
-- Success in earlier testing was a fluke (cached Cloudflare session); now consistently fails
+**Workaround**: Export manually from browser → `aichat2md <exported_file>`
 
 **Unexplored approaches**:
-1. **headed mode** (`headless=False`) — cookie consent may work with real browser UI; viable for desktop CLI, not CI
-2. **Intercept + fake the consent API** — need to discover what endpoint/cookie the consent handler actually calls; could monitor in a real browser's DevTools
-3. **Use `playwright-stealth`** (npm package) — more comprehensive anti-detection than manual patches
-4. **Selenium/undetected-chromedriver** — alternative browser automation with better Cloudflare bypass
-5. **Direct API call** — find Claude's share API endpoint (e.g. `claude.ai/api/share/{uuid}`) using proper auth cookies from a real browser session; Cloudflare blocks direct `requests` calls (403)
-6. **Cookie name discovery** — open claude.ai in a real browser, accept cookies, check what cookie gets set, then pre-set that exact cookie in Playwright context
-
-### Timeout issues (fixed in v1.1.0)
-
-**Symptoms**: "Timeout exceeded" errors on slow networks or large content
-**Solution**: Automatic in v1.1.0+
-- Playwright timeout: 30s → 60s (handles slow page loads)
-- API timeout: Dynamic (60s + 1s per 100 chars, max 600s)
-- Progress spinner shows elapsed time during long operations
-- No user action required
+1. `headless=False` — consent may work with real browser UI
+2. Intercept consent API — discover endpoint/cookie via DevTools
+3. `playwright-stealth` (npm) — more comprehensive anti-detection
+4. `undetected-chromedriver` — better Cloudflare bypass
+5. Direct API call to `claude.ai/api/share/{uuid}` with real browser cookies
+6. Cookie name discovery — pre-set correct consent cookie in Playwright context
 
 ---
 
 ## File Modification Guidelines
 
-### When editing `cli.py`:
-- Keep argument priority: CLI > config > defaults
-- Maintain backward compatibility with old configs
-- Update `--help` examples
-- Add tests to `test_cli.py`
-
-### When editing `config.py`:
-- Don't break existing config files
-- Migrate old formats gracefully
-- Update `DEFAULT_CONFIG`
-- Add tests to `test_config.py`
-
-### When editing `structurizer.py`:
-- Maintain OpenAI API compatibility
-- Handle all common error codes (401, 429, 500)
-- Keep prompt loading flexible
-- Test with multiple APIs
-
-### When editing prompts:
-- Test output quality manually
-- Ensure front matter format stays consistent
-- Keep both languages in sync (conceptually)
+- **`cli.py`**: Keep arg priority CLI > config > defaults; update `--help`; add tests
+- **`config.py`**: Don't break existing configs; update `DEFAULT_CONFIG`; add tests
+- **`structurizer.py`**: Maintain OpenAI compat; handle 401/429/500; test with multiple APIs
+- **Prompts**: Test output quality; keep front matter consistent; sync EN/ZH conceptually
 
 ---
 
-## Testing Strategy
-
-### Unit Tests
-- `test_cli.py`: Filename sanitization, markdown parsing
-- `test_config.py`: Config validation, API presets
-
-### Integration Tests (Manual)
-```bash
-# Test extraction
-aichat2md https://chatgpt.com/share/xxx
-
-# Test webarchive
-aichat2md ~/Downloads/sample.webarchive
-
-# Test language override
-aichat2md <url> --lang zh
-
-# Test output override
-aichat2md <url> -o /tmp/test.md
-
-# Test model override
-aichat2md <url> --model gpt-4o
-```
+## Testing & Release
 
 ### Before Release Checklist
-- [ ] All tests pass: `pytest tests/ -v`
-- [ ] CLI help accurate: `aichat2md --help`
-- [ ] Setup works: `aichat2md --setup`
-- [ ] Version correct: `aichat2md --version`
-- [ ] Build succeeds: `python -m build`
-- [ ] Installation works: `pip install dist/*.whl`
+- [ ] `pytest tests/ -v` passes
+- [ ] `aichat2md --help` accurate
+- [ ] `aichat2md --version` correct
+- [ ] `python -m build` succeeds
+- [ ] `pip install dist/*.whl` works
+
+### PyPI Release
+
+```bash
+# 1. Bump version in pyproject.toml AND aichat2md/__init__.py
+# 2. git commit "chore: bump version to X.Y.Z"
+rm -rf dist/ build/ *.egg-info/
+python -m build
+twine upload dist/*
+
+# Tag and GitHub release
+git tag vX.Y.Z && git push origin vX.Y.Z
+gh release create vX.Y.Z --notes "..." dist/*.tar.gz dist/*.whl
+```
+
+**Critical**: README is bundled at build time — always rebuild after doc changes.
 
 ---
 
 ## Git Workflow
 
-### Branch Strategy
-- `master`: Production-ready code
-- Feature branches: `feature/xyz`
-- Bugfix branches: `bugfix/xyz`
-
-### Commit Message Format
-```
-type: short description
-
-- Detailed change 1
-- Detailed change 2
-
-Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
-```
-
-**Types**: feat, fix, docs, refactor, test, chore
-
-### Before Committing
-```bash
-# Run tests
-pytest tests/ -v
-
-# Check no debug code
-grep -r "print\|pdb\|breakpoint" aichat2md/
-
-# Stage changes
-git add -A
-git status
-```
+- `master`: Production-ready | `feature/xyz` | `bugfix/xyz`
+- Commit types: `feat`, `fix`, `docs`, `refactor`, `test`, `chore`
+- Before committing: `pytest tests/ -v` + check no `pdb`/`breakpoint` in code
 
 ---
 
-## PyPI Release Process
+## Known Limitations & Roadmap
 
-### 1. Pre-release
-```bash
-# Update version in BOTH files:
-# - pyproject.toml (version = "X.Y.Z")
-# - aichat2md/__init__.py (__version__ = "X.Y.Z")
-# Update CHANGELOG.md (if exists)
-# Commit: "chore: bump version to X.Y.Z"
-```
+**Limitations**: Prompts optimized for ChatGPT format; very long conversations may hit token limits; requires Chromium.
 
-### 2. Build
-```bash
-# Clean old builds
-rm -rf dist/ build/ *.egg-info/
-
-# Build fresh
-python -m build
-```
-
-### 3. Test on TestPyPI
-```bash
-twine upload --repository testpypi dist/*
-
-# Test in clean venv
-python -m venv test-venv
-source test-venv/bin/activate
-pip install -i https://test.pypi.org/simple/ aichat2md
-aichat2md --version
-```
-
-### 4. Production Release
-```bash
-twine upload dist/*
-
-# Verify upload (may take 2-3 seconds to propagate)
-pip index versions aichat2md
-```
-
-### 5. GitHub Release
-```bash
-git tag v1.0.0
-git push origin v1.0.0
-
-# Create release on GitHub with:
-# - Tag: v1.0.0
-# - Attach: dist/*.tar.gz and dist/*.whl
-```
-
----
-
-## Performance Considerations
-
-### Token Usage
-- **Extract**: 0 tokens (local processing)
-- **Structurize**: ~1000-4000 tokens/conversation
-- **Cost**: Depends on API (DeepSeek ~$0.001/call)
-
-### Processing Time
-- **URL extraction**: 5-60s (Playwright startup + JS render, auto-scaled timeout)
-- **Webarchive extraction**: <1s (local file parsing)
-- **AI structurization**: 10-600s (API latency + generation, dynamic timeout based on content size)
-- **Progress feedback**: Real-time spinner with elapsed time for long operations
-
-### Optimization Tips
-- Use DeepSeek for cost efficiency
-- Cache extracted content for prompt iterations
-- Split very long conversations (>20K tokens)
-
----
-
-## Known Limitations
-
-1. **ChatGPT focus**: Prompts optimized for ChatGPT format
-2. **Token limits**: Very long conversations may fail
-3. **Playwright dependency**: Requires Chromium installation
-4. **API rate limits**: Respect provider limits
-
----
-
-## Future Enhancements
-
-### Planned (Optional)
-- [ ] Claude/Gemini native support
-- [ ] Batch processing mode
-- [ ] Custom output templates
-- [ ] Conversation splitting for long chats
-- [ ] Local LLM support (Ollama)
-- [ ] Web UI (Flask/FastAPI)
-
-### Not Planned
-- Real-time streaming
-- Cloud hosting
-- Mobile app
+**Planned**: Claude/Gemini native support, batch processing, conversation splitting, Ollama support.
 
 ---
 
 ## Dependencies
 
-**Core**:
-- `playwright>=1.40.0` - Browser automation
-- `requests>=2.31.0` - HTTP client
-- `yaspin>=3.0.0` - Progress spinner with timer
-
-**Dev**:
-- `pytest>=9.0` - Testing
-- `build` - Package building
-- `twine` - PyPI uploads
-
-**Python**: 3.8+ (tested on 3.8, 3.9, 3.10, 3.11, 3.12, 3.13)
+- `playwright>=1.40.0`, `requests>=2.31.0`, `yaspin>=3.0.0`
+- Dev: `pytest>=9.0`, `build`, `twine`
+- Python: 3.8+
 
 ---
 
-## Contact & Support
-
-**Repository**: https://github.com/placenameday/aichat2md
-**Issues**: https://github.com/placenameday/aichat2md/issues
-**License**: MIT
-
----
-
-## Quick Reference
-
-### File Locations
-- **Config**: `~/.config/aichat2md/config.json`
-- **Output**: `~/Downloads/` (default) or `--output` path
-- **Logs**: Stderr (errors only)
-
-### Common Workflows
-
-**First time user**:
-```bash
-pip install aichat2md
-aichat2md --setup
-aichat2md https://chatgpt.com/share/xxx
-```
-
-**Development**:
-```bash
-cd aichat2md
-source venv/bin/activate
-pytest tests/ -v
-aichat2md --help
-```
-
-**Release**:
-```bash
-python -m build
-twine upload dist/*  # Must run in real terminal (interactive token prompt)
-git tag vX.Y.Z
-```
-
----
-
-**Last Updated**: 2026-02-25
-**Version**: 1.3.0
-**Status**: Production-ready
+**Last Updated**: 2026-02-25 | **Version**: 1.3.2
