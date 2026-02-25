@@ -90,10 +90,15 @@ aichat2md/
 ### Supported Platforms
 
 - **ChatGPT** - `chatgpt.com` share links
-- **Claude** - `claude.ai/share` links (stealth mode for Cloudflare)
 - **Gemini** - `gemini.google.com` or `g.co` (auto-redirects)
 - **Doubao (豆包)** - `doubao.com` thread links
-- **Webarchive** - Safari `.webarchive` files (any platform)
+
+### Local File Formats
+
+- **Safari** - `.webarchive` files (best, preserves content perfectly)
+- **Chrome/Edge** - `.mhtml` or `.html` files (Save As → Web Page, Complete)
+- **Firefox** - `.html` files (Save Page As → Web Page, HTML only)
+- **Any browser** - Save entire page to HTML file
 
 ### Extraction Strategy
 
@@ -113,8 +118,8 @@ aichat2md/
 ```
 
 **Load Strategy**:
-- Claude/Gemini/Doubao: `wait_until='load'` (faster, avoids networkidle timeout)
-- Claude: Stealth mode (custom user-agent, hide webdriver) to bypass Cloudflare
+- Claude: **NOT SUPPORTED** (see below)
+- Gemini/Doubao: `wait_until='load'` (faster, avoids networkidle timeout)
 - ChatGPT/others: `wait_until='networkidle'` (waits for all requests)
 
 ### Adding New Platforms
@@ -269,6 +274,20 @@ Verify with: `unzip -l dist/*.whl | grep prompts`
 
 **Fix**: Check API key in `~/.config/aichat2md/config.json`
 
+### Claude share links cannot be extracted
+
+**Error**: Running `aichat2md <claude_url>` shows a warning message with instructions
+
+**Root cause**: Claude share pages use Cloudflare bot detection that prevents automated access via Playwright
+
+**Solution**: Manual export required:
+1. Open the Claude share link in your browser
+2. Click "Export" button (top right corner)
+3. Download as JSON or Markdown
+4. Use: `aichat2md <exported_file>`
+
+**Note**: This is not a bug in the tool - it's a technical limitation due to Cloudflare's browser fingerprinting.
+
 ### Playwright browser not installed
 
 **Fix**: `playwright install chromium`
@@ -290,6 +309,38 @@ System Python blocks `pip install` (PEP 668). Solutions:
 - **Recommended**: `brew install pipx && pipx install aichat2md`
 - Alternative: `python3 -m venv venv && source venv/bin/activate && pip install aichat2md`
 - Not recommended: `pip install --user aichat2md` (requires PATH setup)
+
+### Claude share link extraction (v1.3.0 - BROKEN, needs fix)
+
+**Status**: Stealth mode bypasses Cloudflare, but cookie consent banner blocks content rendering.
+
+**Root cause**: Claude share pages (`claude.ai/share/*`) have a cookie consent banner that blocks React hydration. The conversation data is NOT in the initial HTML — it's fetched lazily via API only AFTER consent is accepted. The consent button's click handler doesn't fire because React hydration itself is blocked by the consent flow.
+
+**What works**:
+- Stealth settings bypass Cloudflare bot detection (user-agent, hide `navigator.webdriver`, `--disable-blink-features=AutomationControlled`)
+- Page HTML loads (800KB+), title is correct, RSC payload contains app shell/i18n strings
+- `wait_until='domcontentloaded'` loads the page; `networkidle` always times out
+
+**What doesn't work**:
+- Button click (Playwright `.click()`, JS `dispatchEvent`, keyboard Tab+Enter) — no effect, no network request fires
+- Removing consent banner — React renders Claude homepage ("App unavailable in region") instead of share content
+- Setting `requiresExplicitConsent: false` via route interception — same homepage fallback
+- Pre-setting cookies (`cookie-consent`, `cookieConsent`, etc.) — wrong cookie name, banner persists
+- Extracting from RSC payload — conversation text is NOT in initial HTML, only 48 Chinese chars (title only)
+
+**Key findings**:
+- RSC data has `"requiresExplicitConsent":true,"gpcDetected":false` wrapping the page
+- Only 1 network request (the page HTML) — no separate API calls happen until consent is accepted
+- Clicking "Accept All Cookies" produces zero network requests (handler not bound or silently failing)
+- Success in earlier testing was a fluke (cached Cloudflare session); now consistently fails
+
+**Unexplored approaches**:
+1. **headed mode** (`headless=False`) — cookie consent may work with real browser UI; viable for desktop CLI, not CI
+2. **Intercept + fake the consent API** — need to discover what endpoint/cookie the consent handler actually calls; could monitor in a real browser's DevTools
+3. **Use `playwright-stealth`** (npm package) — more comprehensive anti-detection than manual patches
+4. **Selenium/undetected-chromedriver** — alternative browser automation with better Cloudflare bypass
+5. **Direct API call** — find Claude's share API endpoint (e.g. `claude.ai/api/share/{uuid}`) using proper auth cookies from a real browser session; Cloudflare blocks direct `requests` calls (403)
+6. **Cookie name discovery** — open claude.ai in a real browser, accept cookies, check what cookie gets set, then pre-set that exact cookie in Playwright context
 
 ### Timeout issues (fixed in v1.1.0)
 
@@ -545,12 +596,12 @@ aichat2md --help
 **Release**:
 ```bash
 python -m build
-twine upload dist/*
+twine upload dist/*  # Must run in real terminal (interactive token prompt)
 git tag vX.Y.Z
 ```
 
 ---
 
-**Last Updated**: 2026-02-03
+**Last Updated**: 2026-02-25
 **Version**: 1.3.0
 **Status**: Production-ready

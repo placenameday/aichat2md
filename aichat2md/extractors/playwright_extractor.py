@@ -79,6 +79,22 @@ def extract_from_url(url: str, timeout: int = 60000) -> str:
                 )
                 page = context.new_page()
                 page.add_init_script('Object.defineProperty(navigator, "webdriver", {get: () => undefined})')
+
+                # Route handler to bypass cookie consent for Claude
+                def handle_claude_route(route):
+                    if route.request.resource_type == 'document':
+                        response = route.fetch()
+                        try:
+                            body = response.text()
+                            # Modify consent flag to bypass cookie banner
+                            modified = body.replace('"requiresExplicitConsent":true', '"requiresExplicitConsent":false')
+                            route.fulfill(response=response, body=modified)
+                        except:
+                            route.fallback()
+                    else:
+                        route.fallback()
+
+                page.route('**/*', handle_claude_route)
             else:
                 browser = p.chromium.launch(headless=True)
                 page = browser.new_page()

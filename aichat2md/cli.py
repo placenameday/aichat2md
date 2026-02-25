@@ -22,6 +22,7 @@ from yaspin import yaspin
 from .config import setup_config, load_config
 from .extractors.playwright_extractor import extract_from_url
 from .extractors.webarchive_extractor import extract_from_webarchive
+from .extractors.html_extractor import extract_from_html
 from .structurizer import structurize_content
 from . import __version__
 
@@ -92,7 +93,7 @@ def generate_filename_from_markdown(markdown: str) -> str:
 
 def extract_content(input_path: str) -> Tuple[str, str]:
     """
-    Extract content from URL or webarchive file.
+    Extract content from URL, webarchive file, or HTML file.
 
     Args:
         input_path: URL or file path
@@ -100,17 +101,52 @@ def extract_content(input_path: str) -> Tuple[str, str]:
     Returns:
         Tuple of (extracted_text, source_identifier)
     """
+    # Check for Claude share links - they require manual export due to browser detection
+    if 'claude.ai/share' in input_path.lower():
+        print("\n" + "="*60)
+        print("⚠️  Claude Share Links")
+        print("="*60)
+        print("\nClaude share links cannot be directly extracted due to:")
+        print("  • Cloudflare browser fingerprinting detection")
+        print("  • Cookie consent blocking automated access")
+        print("\n📌 Manual export required:")
+        print("  1. Open the link in your browser")
+        print("  2. Click the 'Export' button (top right)")
+        print("  3. Download as HTML file")
+        print("  4. Run: aichat2md <exported-file>")
+        print("="*60)
+        print("\n✅ Supported export formats:")
+        print("  • Safari: .webarchive (👑 Best - preserves content perfectly)")
+        print("  • Chrome/Edge: .mhtml or .html")
+        print("  • Firefox: .html")
+        print("  • Any browser: Save Page As → 'Web Page, Complete' (creates .html + folder)")
+        sys.exit(1)
+
     if input_path.startswith('http'):
         with yaspin(text=TimedText(f"Extracting from URL (up to 60s): {input_path}")) as sp:
             text = extract_from_url(input_path)
             sp.ok(f"✓ Extracted {len(text)} characters")
         source = input_path
     else:
-        # Webarchive extraction is fast, no spinner needed
-        print(f"📄 Extracting from webarchive: {input_path}")
-        text = extract_from_webarchive(input_path)
-        print(f"✓ Extracted {len(text)} characters")
-        source = Path(input_path).name
+        # Determine file type
+        input_path_obj = Path(input_path)
+
+        # Check for webarchive files
+        if input_path_obj.suffix.lower() == '.webarchive':
+            # Webarchive extraction is fast, no spinner needed
+            print(f"📄 Extracting from webarchive: {input_path}")
+            text = extract_from_webarchive(input_path)
+            print(f"✓ Extracted {len(text)} characters")
+            source = input_path_obj.name
+        # Check for HTML files
+        elif input_path_obj.suffix.lower() in ['.html', '.htm', '.mhtml', '.xhtml']:
+            # HTML extraction is fast, no spinner needed
+            print(f"📄 Extracting from HTML file: {input_path}")
+            text = extract_from_html(input_path)
+            print(f"✓ Extracted {len(text)} characters")
+            source = input_path_obj.name
+        else:
+            raise ValueError(f"Unsupported file format: {input_path}. Use .webarchive, .html, or .mhtml")
 
     return text, source
 
