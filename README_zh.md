@@ -4,8 +4,8 @@
 
 ## 特性
 
-- 🌐 **从 URL 提取** - 支持 ChatGPT、Claude、Gemini、豆包分享链接（通过 Playwright 渲染 JS）
-- 📄 **从 webarchive 提取** - Safari .webarchive 文件（离线模式）
+- 🌐 **从 URL 提取** - 支持 ChatGPT、Gemini、豆包分享链接（通过 Playwright 渲染 JS）
+- 📄 **从本地文件提取** - 支持 .webarchive、.html、.mhtml、.xhtml 文件（离线模式）
 - 🤖 **多 AI 后端** - DeepSeek、OpenAI、Groq 或任何兼容 OpenAI 的 API
 - 🌍 **双语支持** - 英文/中文提示词
 - 📝 **清晰输出** - 知识文档格式，非聊天记录
@@ -30,19 +30,17 @@ aichat2md ~/Downloads/chat.webarchive
 ## 支持的平台
 
 - **ChatGPT** - chatgpt.com 分享链接
-- **Claude** - claude.ai/share 分享链接
 - **Gemini** - gemini.google.com 或 g.co 分享链接
 - **豆包** - doubao.com 分享链接
+- **Claude** - 需要手动导出（见下方说明）
 - **Webarchive** - Safari 导出的 .webarchive 文件（支持所有平台）
+- **HTML 文件** - 任何浏览器导出的 .html、.mhtml、.xhtml 文件
 
 ### 使用示例
 
 ```bash
 # ChatGPT
 aichat2md https://chatgpt.com/share/xxx
-
-# Claude
-aichat2md https://claude.ai/share/xxx
 
 # Gemini（支持长短链接）
 aichat2md https://gemini.google.com/share/xxx
@@ -53,7 +51,20 @@ aichat2md https://www.doubao.com/thread/xxx
 
 # Webarchive 文件
 aichat2md ~/Downloads/conversation.webarchive
+
+# HTML 文件（Chrome/Edge/Firefox/Safari）
+aichat2md ~/Downloads/conversation.html
+aichat2md ~/Downloads/conversation.mhtml
 ```
+
+### Claude 分享链接
+
+注意：Claude 分享链接无法直接提取，因为 Cloudflare 会阻止自动化访问。请手动导出：
+
+1. 在浏览器中打开 Claude 分享链接
+2. 点击"导出"按钮（右上角）
+3. 下载为 HTML 或 Markdown 文件
+4. 使用：`aichat2md <导出的文件>`
 
 ## 支持的 AI 后端
 
@@ -257,6 +268,14 @@ python -m build
 ### Playwright 错误
 
 安装浏览器：`playwright install chromium`
+
+### Claude 分享链接无法使用
+
+Claude 分享链接无法直接提取，因为 Cloudflare 会阻止自动化访问。请手动导出：
+1. 在浏览器中打开链接
+2. 点击"导出"按钮（右上角）
+3. 下载为 HTML 或 Markdown
+4. 使用：`aichat2md <导出的文件>`
 
 ### 输出为空
 

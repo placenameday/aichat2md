@@ -4,8 +4,8 @@ Convert AI chat conversations to structured Markdown documents.
 
 ## Features
 
-- 🌐 **Extract from URLs** - ChatGPT, Claude, Gemini, Doubao share links (with JS rendering via Playwright)
-- 📄 **Extract from webarchive** - Safari .webarchive files (offline mode)
+- 🌐 **Extract from URLs** - ChatGPT, Gemini, Doubao share links (with JS rendering via Playwright)
+- 📄 **Extract from local files** - .webarchive, .html, .mhtml, .xhtml files (offline mode)
 - 🤖 **Multiple AI backends** - DeepSeek, OpenAI, Groq, or any OpenAI-compatible API
 - 🌍 **Bilingual support** - English/Chinese prompts
 - 📝 **Clean output** - Knowledge-focused Markdown, not chat logs
@@ -30,19 +30,17 @@ aichat2md ~/Downloads/chat.webarchive
 ## Supported Platforms
 
 - **ChatGPT** - chatgpt.com share links
-- **Claude** - claude.ai/share links
 - **Gemini** - gemini.google.com or g.co share links
 - **Doubao (豆包)** - doubao.com share links
+- **Claude** - Manual export required (see below)
 - **Webarchive** - Safari exported .webarchive files (any platform)
+- **HTML Files** - .html, .mhtml, .xhtml files from any browser
 
 ### Usage Examples
 
 ```bash
 # ChatGPT
 aichat2md https://chatgpt.com/share/xxx
-
-# Claude
-aichat2md https://claude.ai/share/xxx
 
 # Gemini (supports both long and short URLs)
 aichat2md https://gemini.google.com/share/xxx
@@ -53,7 +51,20 @@ aichat2md https://www.doubao.com/thread/xxx
 
 # Webarchive file
 aichat2md ~/Downloads/conversation.webarchive
+
+# HTML files (Chrome/Edge/Firefox/Safari)
+aichat2md ~/Downloads/conversation.html
+aichat2md ~/Downloads/conversation.mhtml
 ```
+
+### Claude Share Links
+
+Note: Claude share links cannot be directly extracted due to Cloudflare browser detection. Please export manually:
+
+1. Open the Claude share link in your browser
+2. Click "Export" button (top right)
+3. Download as HTML or Markdown file
+4. Use: `aichat2md <exported-file>`
 
 ## Supported AI Backends
 
@@ -257,6 +268,14 @@ Check your API key in `~/.config/aichat2md/config.json`.
 ### Playwright errors
 
 Install browsers: `playwright install chromium`
+
+### Claude share link not working
+
+Claude share links cannot be directly extracted due to Cloudflare browser detection. Please export manually:
+1. Open the link in your browser
+2. Click "Export" button (top right)
+3. Download as HTML or Markdown
+4. Use: `aichat2md <exported-file>`
 
 ### Empty output
 
