@@ -11,10 +11,12 @@ def _detect_platform(url: str) -> str:
         url: Share URL
 
     Returns:
-        Platform name: 'doubao', 'gemini', or 'default'
+        Platform name: 'claude', 'doubao', 'gemini', or 'default'
     """
     url_lower = url.lower()
-    if 'doubao.com' in url_lower:
+    if 'claude.ai' in url_lower:
+        return 'claude'
+    elif 'doubao.com' in url_lower:
         return 'doubao'
     elif 'gemini.google.com' in url_lower or 'g.co' in url_lower:
         return 'gemini'
@@ -33,6 +35,7 @@ def _get_wait_time(platform: str) -> int:
         Wait time in milliseconds
     """
     wait_times = {
+        'claude': 5000,
         'doubao': 3000,
         'gemini': 5000,
         'default': 2000
@@ -64,12 +67,25 @@ def extract_from_url(url: str, timeout: int = 60000) -> str:
 
     try:
         with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            page = browser.new_page()
+            # Claude.ai uses Cloudflare protection, needs stealth settings
+            if platform == 'claude':
+                browser = p.chromium.launch(
+                    headless=True,
+                    args=['--disable-blink-features=AutomationControlled']
+                )
+                context = browser.new_context(
+                    user_agent='Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
+                    viewport={'width': 1920, 'height': 1080}
+                )
+                page = context.new_page()
+                page.add_init_script('Object.defineProperty(navigator, "webdriver", {get: () => undefined})')
+            else:
+                browser = p.chromium.launch(headless=True)
+                page = browser.new_page()
 
             # Navigate with appropriate wait strategy
-            # Use 'load' for Gemini/Doubao (networkidle may timeout due to ongoing requests)
-            wait_strategy = 'load' if platform in ['gemini', 'doubao'] else 'networkidle'
+            # Use 'load' for Gemini/Doubao/Claude (networkidle may timeout due to ongoing requests)
+            wait_strategy = 'load' if platform in ['gemini', 'doubao', 'claude'] else 'networkidle'
             page.goto(url, wait_until=wait_strategy, timeout=60000)
 
             # Wait for content to load

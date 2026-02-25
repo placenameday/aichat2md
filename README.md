@@ -4,7 +4,7 @@ Convert AI chat conversations to structured Markdown documents.
 
 ## Features
 
-- 🌐 **Extract from URLs** - ChatGPT, Gemini, Doubao share links (with JS rendering via Playwright)
+- 🌐 **Extract from URLs** - ChatGPT, Claude, Gemini, Doubao share links (with JS rendering via Playwright)
 - 📄 **Extract from webarchive** - Safari .webarchive files (offline mode)
 - 🤖 **Multiple AI backends** - DeepSeek, OpenAI, Groq, or any OpenAI-compatible API
 - 🌍 **Bilingual support** - English/Chinese prompts
@@ -30,6 +30,7 @@ aichat2md ~/Downloads/chat.webarchive
 ## Supported Platforms
 
 - **ChatGPT** - chatgpt.com share links
+- **Claude** - claude.ai/share links
 - **Gemini** - gemini.google.com or g.co share links
 - **Doubao (豆包)** - doubao.com share links
 - **Webarchive** - Safari exported .webarchive files (any platform)
@@ -39,6 +40,9 @@ aichat2md ~/Downloads/chat.webarchive
 ```bash
 # ChatGPT
 aichat2md https://chatgpt.com/share/xxx
+
+# Claude
+aichat2md https://claude.ai/share/xxx
 
 # Gemini (supports both long and short URLs)
 aichat2md https://gemini.google.com/share/xxx

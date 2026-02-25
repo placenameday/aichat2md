@@ -90,6 +90,7 @@ aichat2md/
 ### Supported Platforms
 
 - **ChatGPT** - `chatgpt.com` share links
+- **Claude** - `claude.ai/share` links (stealth mode for Cloudflare)
 - **Gemini** - `gemini.google.com` or `g.co` (auto-redirects)
 - **Doubao (豆包)** - `doubao.com` thread links
 - **Webarchive** - Safari `.webarchive` files (any platform)
@@ -104,6 +105,7 @@ aichat2md/
 **Wait Times**:
 ```python
 {
+    'claude': 5000,   # 5s for Claude (Cloudflare + JS rendering)
     'doubao': 3000,   # 3s for Doubao's dynamic content
     'gemini': 5000,   # 5s for Gemini's slower rendering
     'default': 2000   # 2s for ChatGPT and others
@@ -111,7 +113,8 @@ aichat2md/
 ```
 
 **Load Strategy**:
-- Gemini/Doubao: `wait_until='load'` (faster, avoids networkidle timeout)
+- Claude/Gemini/Doubao: `wait_until='load'` (faster, avoids networkidle timeout)
+- Claude: Stealth mode (custom user-agent, hide webdriver) to bypass Cloudflare
 - ChatGPT/others: `wait_until='networkidle'` (waits for all requests)
 
 ### Adding New Platforms
@@ -549,5 +552,5 @@ git tag vX.Y.Z
 ---
 
 **Last Updated**: 2026-02-03
-**Version**: 1.2.0
+**Version**: 1.3.0
 **Status**: Production-ready
