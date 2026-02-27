@@ -8,10 +8,11 @@ Requirements:
 2. Extract technical tags (e.g., [Python, API, Web]), limit to 3-5 tags
 3. Write a summary (2-3 sentences covering core content)
 4. Reorganize the conversation into knowledge sections with logical headings (## and ###)
-5. Filter out conversational filler ("OK", "let me think", "thanks", etc.)
-6. Extract code blocks and present them separately in "Code Examples" section
+5. Filter out conversational filler ("OK", "let me think", "thanks", etc.) BUT preserve substantial content - do not over-compress
+6. Code Examples section: ONLY include if the conversation contains ACTUAL executable code (functions, scripts, commands). Skip this section if code blocks only contain paths, URLs, flow descriptions, or formatted text.
 7. Do NOT preserve chat turn format (User/Assistant) - rewrite as flowing explanatory content
 8. Identify key topics and list them as bullet points
+9. Preserve important details and examples from the original - do not summarize away key information
 
 Output format (strictly follow):
 ---
@@ -47,4 +48,6 @@ source: [original URL or filename]
 Notes:
 - Titles should be specific and informative, avoid generic titles like "Introduction", "Overview"
 - Content should flow smoothly, like a tutorial or documentation rather than chat logs
-- Code examples should be complete and runnable, with necessary comments
+- Preserve detailed explanations and examples from original - avoid over-summarizing
+- NEVER generate code that wasn't in the original - if no actual code exists, omit Code Examples section entirely
+- Code-formatted text (paths, URLs, flows, configs) should stay in context, not be extracted as "code examples"
